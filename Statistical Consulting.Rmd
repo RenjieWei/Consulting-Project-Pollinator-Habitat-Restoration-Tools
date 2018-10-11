@@ -1,0 +1,494 @@
+---
+title: "STAT427_Final_Project"
+output: pdf_document
+---
+
+##Data Preprocessing
+
+```{r  eval = FALSE}
+library(ggplot2)
+library(readxl)
+library("ggpubr")
+data_Jun <- read_excel("427data.xlsx")
+data_Aug <- read_excel("427data.xlsx",sheet=2)
+data_Oct <- read_excel("427data.xlsx",sheet=3)
+ratio_Jun <- data.frame((data_Jun$Forbs+data_Jun$Grass)/(data_Jun$Forbs+data_Jun$Grass+data_Jun$Weeds))
+ratio_Aug <- (data_Aug$Forbs+data_Aug$Grass)/(data_Aug$Forbs+data_Aug$Grass+data_Aug$Weeds)
+ratio_Oct <- (data_Oct$Forbs+data_Oct$Grass)/(data_Oct$Forbs+data_Oct$Grass+data_Oct$Weeds)
+
+# check the na, decided to set to 0
+ratio_Jun[is.na(ratio_Jun)] <- 0
+ratio_Aug[is.na(ratio_Aug)] <- 0
+ratio_Oct[is.na(ratio_Oct)] <- 0
+
+# set to different treatments to factors
+data_Jun$Stratified = as.factor(data_Jun$Stratified)
+data_Jun$Seedmix = as.factor(data_Jun$Seedmix)
+data_Jun$Application = as.factor(data_Jun$Application)
+data_Jun$SoilHealth=as.numeric(as.factor(data_Jun$SoilHealth))
+data_Jun$NutrientRunoff=as.numeric(as.factor(data_Jun$NutrientRunoff))
+#data_Jun$Date = as.factor(matrix(0,nrow=60,ncol=1))
+data_Aug$Stratified = as.factor(data_Aug$Stratified)
+data_Aug$Seedmix = as.factor(data_Aug$Seedmix)
+data_Aug$Application = as.factor(data_Aug$Application)
+data_Aug$SoilHealth=as.numeric(as.factor(data_Aug$SoilHealth))
+data_Aug$NutrientRunoff=as.numeric(as.factor(data_Aug$NutrientRunoff))
+#data_Aug$Date = as.factor(matrix(1,nrow=60,ncol=1))
+data_Oct$Stratified = as.factor(data_Oct$Stratified)
+data_Oct$Seedmix = as.factor(data_Oct$Seedmix)
+data_Oct$Application = as.factor(data_Oct$Application)
+#data_Oct$Date = as.factor(matrix(2,nrow=60,ncol=1))
+data_Oct$SoilHealth=as.numeric(as.factor(data_Oct$SoilHealth))
+#data_Oct$SoilStructure=as.numeric(as.factor(data_Oct$SoilStructure))
+data_Oct$NutrientRunoff=as.numeric(as.factor(data_Oct$NutrientRunoff))
+#data_Oct$MoistureRegime=as.numeric(as.factor(data_Oct$MoistureRegime))
+
+DATA_Jun <- data.frame(ratio_Jun,data_Jun$Stratified,data_Jun$Seedmix,data_Jun$Application,data_Jun$SoilHealth,data_Jun$NutrientRunoff)
+DATA_Aug <- data.frame(ratio_Aug,data_Aug$Stratified,data_Aug$Seedmix,data_Aug$Application,data_Aug$SoilHealth,data_Aug$NutrientRunoff)
+DATA_Oct <- data.frame(ratio_Oct,data_Oct$Stratified,data_Oct$Seedmix,data_Oct$Application,data_Oct$SoilHealth,data_Oct$NutrientRunoff)
+colnames(DATA_Jun) <- c("ratio","Stratified",'Seedmix',"Application","SoilHealth","NutrientRunoff")
+colnames(DATA_Aug) <- c("ratio","Stratified",'Seedmix',"Application","SoilHealth","NutrientRunoff")
+colnames(DATA_Oct) <- c("ratio","Stratified",'Seedmix',"Application","SoilHealth","NutrientRunoff")
+DATA_TOTAL <- rbind(DATA_Jun,DATA_Aug,DATA_Oct) 
+```
+
+##Visualization
+
+```{r  eval = FALSE}
+##check the distribution of the response variables
+A = ggplot(data = DATA_Jun, aes(DATA_Jun$ratio_Jun)) + 
+  geom_histogram(breaks = seq(0, 0.6, by = 0.05), 
+                 col = "red", 
+                 fill = "green", 
+                 alpha = .2) + 
+  labs(title = "Ratio of June") +
+  labs(x = "Ratio", y = "Frequency") + 
+  xlim(c(0,0.6)) + 
+  ylim(c(0,19)) + theme(axis.title.y = element_blank()) 
+
+B = ggplot(data = DATA_Aug, aes(DATA_Aug$ratio_Aug)) + 
+  geom_histogram(breaks = seq(0, 0.6, by = 0.05), 
+                 col = "red", 
+                 fill = "green", 
+                 alpha = .2) + 
+  labs(title = "Ratio of August") +
+  labs(x = "Ratio", y = "Frequency") + 
+  xlim(c(0,0.6)) + 
+  ylim(c(0,19)) + theme(axis.title.y = element_blank())
+
+C = ggplot(data = DATA_Oct, aes(DATA_Oct$ratio_Oct)) + 
+  geom_histogram(breaks = seq(0, 0.6, by = 0.05), 
+                 col = "red", 
+                 fill = "green", 
+                 alpha = .2) + 
+  labs(title = "Ratio of October") +
+  labs(x = "Ratio", y = "Frequency") + 
+  xlim(c(0,0.6)) + 
+  ylim(c(0,19)) + theme(axis.title.y = element_blank())
+
+figure = ggarrange(A, B, C, ncol = 3, nrow = 1)
+figure
+```
+
+```{r  eval = FALSE}
+total1 = merge(DATA_Jun, DATA_Aug, by = c("Plot", "Stratify", "Mix", "Timing", "Soilhealth"))
+total = merge(total1, DATA_Oct, by = c("Plot", "Stratify", "Mix", "Timing", "Soilhealth"))
+
+#convert the data type of first 4 columns into factor
+total$Plot = as.factor(total$Plot)
+total$Stratify = as.factor(total$Stratify)
+total$Mix = as.factor(total$Mix)
+total$Timing = as.factor(total$Timing)
+total$lev_name = paste(as.character(total$Stratify), as.character(total$Mix), as.character(total$Timing), sep = ".")
+
+#replace all NAs with 0
+total[is.na(total)] <- 0
+
+#compute the correlation between the ratio of three different months
+cor_ratio = cor(total[, 6:8], total[, 6:8], method = "pearson")
+cor_ratio
+
+total$avg_ratio = rowMeans(total[, 6:8])
+```
+
+
+```{r  eval = FALSE}
+#check the effect of soil health
+ggplot(total, aes(x = Soilhealth, y = avg_ratio)) + 
+    geom_boxplot(fill = "grey80", colour = "blue") + 
+    scale_x_discrete() + xlab("Soil Condition") + 
+    labs(title = "The Effect of Soilhealth") + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+```
+
+```{r  eval = FALSE}
+#check the effect of stratification
+A = ggplot(total, aes(x = Stratify, y = ratio_Jun)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete() + labs(title = "June_Ratio") + coord_cartesian(ylim = c(0, 0.6)) + theme(axis.title.y = element_blank()) + stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3, show_guide = FALSE)
+
+B = ggplot(total, aes(x = Stratify, y = ratio_Aug)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete() + labs(title = "ratio_Aug") + coord_cartesian(ylim = c(0, 0.6)) + theme(axis.title.y = element_blank()) + stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3, show_guide = FALSE)
+
+
+C = ggplot(total, aes(x = Stratify, y = ratio_Oct)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete() + labs(title = "ratio_Oct") + coord_cartesian(ylim = c(0, 0.6)) + theme(axis.title.y = element_blank()) + stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3, show_guide = FALSE)
+
+figure = ggarrange(A, B, C, ncol = 3, nrow = 1)
+
+figure
+```
+
+
+```{r  eval = FALSE}
+#check the effect of different seed mixes
+A = ggplot(total, aes(x = Mix, y = ratio_Jun)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete() + labs(title = "June_Ratio") + coord_cartesian(ylim = c(0, 0.65)) + theme(axis.title.y = element_blank()) + stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+B = ggplot(total, aes(x = Mix, y = ratio_Aug)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete()  + labs(title = "ratio_Aug") + coord_cartesian(ylim = c(0, 0.65)) + theme(axis.title.y = element_blank()) + stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+
+C = ggplot(total, aes(x = Mix, y = ratio_Oct)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete()  + labs(title = "ratio_Oct") + coord_cartesian(ylim = c(0, 0.65)) + theme(axis.title.y = element_blank()) + stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+figure = ggarrange(A, B, C, ncol = 3, nrow = 1)
+
+figure
+```
+
+
+```{r  eval = FALSE}
+#check the effect of timing application
+A = ggplot(total, aes(x = Timing, y = ratio_Jun)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete()  + labs(title = "June_Ratio") + coord_cartesian(ylim = c(0,0.65)) + theme(axis.title.y = element_blank()) + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+B = ggplot(total, aes(x = Timing, y = ratio_Aug)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete()  + labs(title = "ratio_Aug") + coord_cartesian(ylim = c(0, 0.65)) + theme(axis.title.y = element_blank()) + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+
+C = ggplot(total, aes(x = Timing, y = ratio_Oct)) + geom_boxplot(fill = "grey80", colour = "blue") + scale_x_discrete() + labs(title = "ratio_Oct") + coord_cartesian(ylim = c(0, 0.65)) + theme(axis.title.y = element_blank()) + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+figure = ggarrange(A, B, C, ncol = 3, nrow = 1)
+
+figure
+```
+
+
+```{r  eval = FALSE}
+#plot the ratio of 12 different treatment level
+ggplot(total, aes(x = lev_name, y = ratio_Jun)) + 
+    geom_boxplot(fill = "grey80", colour = "blue") +
+    scale_x_discrete() + xlab("Treatment Level") + ylab("Ratio") +
+    labs(title = "Boxplot of 12 Treatment Levels vs Ratio -- June") + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+ggplot(total, aes(x = lev_name, y = ratio_Aug)) + 
+    geom_boxplot(fill = "grey80", colour = "blue") +
+    scale_x_discrete() + xlab("Treatment Level") + ylab("Ratio") +
+    labs(title = "Boxplot of 12 Treatment Levels vs Ratio -- August") + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+ggplot(total, aes(x = lev_name, y = ratio_Oct)) + 
+    geom_boxplot(fill = "grey80", colour = "blue") +
+    scale_x_discrete() + xlab("Treatment Level") + ylab("Ratio") +
+    labs(title = "Boxplot of 12 Treatment Levels vs Ratio -- October") + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+ggplot(total, aes(x = lev_name, y = avg_ratio)) + 
+    geom_boxplot(fill = "grey80", colour = "blue") +
+    scale_x_discrete() + xlab("Treatment Level") + ylab("Ratio") +
+    labs(title = "Boxplot of 12 Treatment Levels vs Ratio -- Average Ratio") + 
+    stat_summary(fun.y = mean, colour = "darkred", geom = "point", shape = 18, size = 3,show_guide = FALSE)
+
+```
+
+
+##ANOVA Analysis
+
+###June Data Analysis
+```{r  eval = FALSE}
+raw_data = read_excel("427data.xlsx")
+
+# data0 just consider 3 factor, leave the soil(plot) condition
+data0 = raw_data[, c('Forbs', 'Grass', 'Weeds', 'Stratified', 'Seedmix', 'Application')]
+# use the ratio of forbs + grass to weeds as the target
+# data0[, "Ratio"] = (data0[, "Forbs"] + data0[, "Grass"]) / data0[, "Weeds"]
+data0[, "Ratio"] = (data0[, "Forbs"] + data0[, "Grass"]) / 
+  (data0[, "Forbs"] + data0[, "Grass"] + data0[, "Weeds"])
+
+# check the na, decided to set to 0 (denominator, Weeds, is 0)
+data0[, "Ratio"][is.na(data0[, "Ratio"])] <- 0
+# set to different treatments to factors
+data0$Stratified = as.factor(data0$Stratified)
+data0$Seedmix = as.factor(data0$Seedmix)
+data0$Application = as.factor(data0$Application )
+
+par(mfrow=c(1,1))
+# Plot the mean of Ratio for the different factors levels
+plot.design(Ratio ~ Stratified + Seedmix + Application, data = data0)
+par(mfrow=c(3,1))
+# Plot the mean of Ratio for two-way combinations of factors
+interaction.plot(data0$Stratified, data0$Seedmix, data0$Ratio)
+interaction.plot(data0$Stratified, data0$Application, data0$Ratio)
+interaction.plot(data0$Application, data0$Seedmix, data0$Ratio)
+
+library(dplyr)
+group_by(data0, Stratified, Seedmix, Application) %>%
+  summarise(
+    count = n(),
+    mean = mean(Ratio, na.rm = TRUE),
+    sd = sd(Ratio, na.rm = TRUE)
+  )
+
+# Generate the full model
+m01 <- aov(Ratio ~ Stratified * Seedmix * Application, data = data0)
+summary(m01)
+# Just keep significant items
+m02 <- aov(Ratio ~ Stratified + Seedmix + Application, data = data0)
+summary(m02)
+# Comparison between nested models
+anova(m01, m02)
+# Residual plots
+par(mfrow=c(2,4))
+plot(m01)
+plot(m02)
+
+library(car)
+leveneTest(Ratio ~ Stratified * Seedmix * Application, data = data0)
+# From the output above we can see that the p-value is not less than the significance level of 0.05. 
+# This means that there is no evidence to suggest that the variance across groups is statistically significantly different. 
+# Therefore, we can assume the homogeneity of variances in the different treatment groups.
+
+# the Shapiro-Wilk test on the ANOVA residuals 
+# Extractthe residuals
+aov_residuals <- residuals(object = m02)
+# Run Shapiro-Wilk test
+shapiro.test(x = aov_residuals)
+# No indication that normality is violated.
+
+# Tukey multiple pairwise-comparisons
+TukeyHSD(m02, which = c("Stratified", "Seedmix", "Application"))
+
+data1 = data0
+data1[, c('SoilHealth', 'SoilStructure', 'NutrientRunoff', 'MoistureRegime')] = 
+  raw_data[, c('SoilHealth', 'SoilStructure', 'NutrientRunoff', 'MoistureRegime')]
+summary(data1)
+levels(data1$NutrientRunoff)[1] = 'Nor'
+summary(data1)
+
+par(mfrow=c(1,1))
+plot.design(Ratio ~ Stratified + Seedmix + Application + SoilHealth + SoilStructure + NutrientRunoff + MoistureRegime, data = data1)
+
+m11 <- aov(Ratio ~ Stratified * Seedmix * Application 
+           * SoilHealth * NutrientRunoff, data = data1)
+summary(m11)
+
+m12 <- aov(Ratio ~ Stratified + Seedmix + Application + SoilHealth + NutrientRunoff + Application:NutrientRunoff, data = data1)
+summary(m12)
+
+
+chisq.test(data1$SoilStructure, data1$SoilHealth) # high correlation
+chisq.test(data1$NutrientRunoff, data1$SoilHealth) 
+chisq.test(data1$MoistureRegime, data1$SoilHealth) # high correlation
+chisq.test(data1$MoistureRegime, data1$SoilStructure) # high
+
+m12 <- aov(Ratio ~ Stratified * Seedmix * Application 
+           * SoilHealth * NutrientRunoff, data = data1)
+summary(m12)
+
+m13 <- aov(Ratio ~ Stratified + Seedmix + Application 
+           + SoilHealth + NutrientRunoff + Application:NutrientRunoff, data = data1)
+summary(m13) # all sig.
+
+m14 <- aov(Ratio ~ Stratified * Seedmix * Application, data = data1)
+summary(m14)
+
+m15 <- aov(Ratio ~ Stratified + Seedmix + Application, data = data1)
+summary(m15) # all sig.
+
+anova(m13, m15)
+# 0.0004554, cannot ignore those intems, m13 is better. 
+```
+
+
+###August Data Analysis
+
+```{r  eval = FALSE}
+raw_data = read_excel("427data.xlsx",sheet=2)
+
+# data0 just consider 3 factor, leave the soil(plot) condition
+data0 = raw_data[, c('Forbs', 'Grass', 'Weeds', 'Stratified', 'Seedmix', 'Application')]
+# use the ratio of forbs + grass to weeds as the target
+# data0[, "Ratio"] = (data0[, "Forbs"] + data0[, "Grass"]) / data0[, "Weeds"]
+data0[, "Ratio"] = (data0[, "Forbs"] + data0[, "Grass"]) / 
+  (data0[, "Forbs"] + data0[, "Grass"] + data0[, "Weeds"])
+
+# check the na, decided to set to 0 (denominator, Weeds, is 0)
+data0[, "Ratio"][is.na(data0[, "Ratio"])] <- 0
+# set to different treatments to factors
+data0$Stratified = as.factor(data0$Stratified)
+data0$Seedmix = as.factor(data0$Seedmix)
+data0$Application = as.factor(data0$Application )
+
+par(mfrow=c(1,1))
+# Plot the mean of Ratio for the different factors levels
+plot.design(Ratio ~ Stratified + Seedmix + Application, data = data0)
+par(mfrow=c(1,1))
+# Plot the mean of Ratio for two-way combinations of factors
+interaction.plot(data0$Stratified, data0$Seedmix, data0$Ratio)
+interaction.plot(data0$Stratified, data0$Application, data0$Ratio)
+interaction.plot(data0$Application, data0$Seedmix, data0$Ratio)
+
+# Summary Statistics
+library(dplyr)
+group_by(data0, Stratified, Seedmix, Application) %>%
+  summarise(
+    count = n(),
+    mean = mean(Ratio, na.rm = TRUE),
+    sd = sd(Ratio, na.rm = TRUE)
+  )
+
+# Generate the full model
+m01 <- aov(Ratio ~ Stratified * Seedmix * Application, data = data0)
+summary(m01)
+# Just keep significant items
+m02 <- aov(Ratio ~ Stratified + Seedmix + Application + Stratified:Seedmix, data = data0)
+summary(m02)
+
+m03 <- aov(Ratio ~ Stratified, data = data0)
+summary(m03)
+
+# Comparison between nested models
+anova(m01, m02)
+# Residual plots
+par(mfrow=c(2,4))
+plot(m01)
+plot(m02)
+
+## Problem! ANOVA assumes that the data are normally distributed 
+## and the variance across groups are homogeneous...
+## Remove outliers??
+
+# Check the homogeneity of variance assumption
+library(car)
+leveneTest(Ratio ~ Stratified * Seedmix * Application, data = data0)
+# From the output above we can see that the p-value is not less than the significance level of 0.05. 
+# This means that there is no evidence to suggest that the variance across groups is statistically significantly different. 
+# Therefore, we can assume the homogeneity of variances in the different treatment groups.
+
+# the Shapiro-Wilk test on the ANOVA residuals 
+# Extractthe residuals
+aov_residuals <- residuals(object = m02)
+# Run Shapiro-Wilk test
+shapiro.test(x = aov_residuals)
+# No indication that normality is violated.
+
+# Tukey multiple pairwise-comparisons
+TukeyHSD(m02, which = c("Stratified", "Seedmix", "Application"))
+
+
+
+
+# Add information of soil condition 
+data1 = data0
+data1[, c('SoilHealth', 'SoilStructure', 'NutrientRunoff', 'MoistureRegime')] = 
+  raw_data[, c('SoilHealth', 'SoilStructure', 'NutrientRunoff', 'MoistureRegime')]
+summary(data1)
+levels(data1$NutrientRunoff)[1] = 'Nor'
+summary(data1)
+
+par(mfrow=c(1,1))
+plot.design(Ratio ~ Stratified + Seedmix + Application + SoilHealth + SoilStructure + NutrientRunoff + MoistureRegime, data = data1)
+
+
+m11 <- aov(Ratio ~ Stratified * Seedmix * Application 
+           * SoilHealth * NutrientRunoff , data = data1)
+summary(m11)
+
+m12 <- aov(Ratio ~ Stratified + Seedmix + Application + SoilHealth
+           + Stratified:Seedmix, data = data1)
+summary(m12)
+
+m13 <- aov(Ratio ~ Stratified + Seedmix + Application + Stratified:Seedmix, data = data1)
+summary(m13)
+anova(m12, m13)
+
+
+m15 <- aov(Ratio ~ Seedmix * Application, data = data1)
+summary(m15)
+m16 <- aov(Ratio ~ Seedmix + Application, data = data1)
+summary(m16)
+m17 <- aov(Ratio ~ Stratified + Seedmix + Application, data = data1)
+summary(m17)
+# Stratified not sig.
+
+m19 <- aov(Ratio ~ Stratified + Seedmix + Application 
+         + SoilHealth + Stratified:Seedmix, data = data1)
+summary(m19)
+
+anova(m02, m16)
+# m02 better
+
+
+par(mfrow=c(2,2))
+plot(m11)
+m12 <- aov(Ratio ~ Stratified + Seedmix + Application + SoilHealth
+           +Stratified:Seedmix + Stratified:Application, data = data1)
+summary(m12)
+plot(m12)
+# here main 3 are sig. 
+
+chisq.test(data1$Stratified, data1$SoilHealth)
+chisq.test(data1$Seedmix, data1$SoilHealth)
+chisq.test(data1$Application, data1$SoilHealth)
+
+chisq.test(data1$Stratified, data1$Seedmix)
+chisq.test(data1$Stratified, data1$Application)
+chisq.test(data1$Seedmix, data1$Application)
+
+chisq.test(data1$SoilStructure, data1$SoilHealth)
+# high correlation
+chisq.test(data1$NutrientRunoff, data1$SoilHealth) # 0.07
+chisq.test(data1$MoistureRegime, data1$SoilHealth)
+# high corrlation
+
+
+
+m18 <- aov(Ratio ~ Stratified * Seedmix * Application 
+         * SoilHealth * NutrientRunoff , data = data1)
+summary(m18)
+
+m13 <- aov(Ratio ~ Stratified * Seedmix * Application * SoilHealth, data = data1)
+summary(m13)
+
+m14 <- aov(Ratio ~ Stratified * Seedmix * Application, data = data1)
+summary(m14)
+
+
+dataSeed1 = data1[which(data1$Seedmix == 1) ,]
+m20 = aov(Ratio ~ Stratified * Application 
+          * SoilHealth * NutrientRunoff, data = data1)
+summary(m20)
+
+dataSeed1 = data1[which(data1$Seedmix == 0) ,]
+m21 = aov(Ratio ~ Stratified + Application, data = data1)
+summary(m21)
+```
+
+###October Data Analysis
+
+###Entire Data Analysis
+```{r  eval = FALSE}
+# Generate the full model for three month
+m01 <- aov(ratio ~ Stratified * Seedmix * Application * SoilHealth*NutrientRunoff, data = DATA_TOTAL)
+summary(m01)
+```
+```{r}
+# Just keep significant items(Stratified, Seedmix,Application,SoilHealth,NutrientRunoff,Seedmix:Application, Seedmix:SoilHealth, Stratified:NutrientRunoff,SoilHealth:NutrientRunoff ,Stratified:Application:SoilHealth,Stratified:Seedmix:NutrientRunoff,Stratified:Application:NutrientRunoff,Seedmix:Application:NutrientRunoff)
+m02 <- aov(ratio ~ Stratified+Seedmix+Application+SoilHealth+NutrientRunoff+Seedmix:Application+Seedmix:SoilHealth+ Stratified:NutrientRunoff+SoilHealth:NutrientRunoff+Stratified:Application:SoilHealth+Stratified:Seedmix:NutrientRunoff+Stratified:Application:NutrientRunoff+Seedmix:Application:NutrientRunoff, data = DATA_TOTAL)
+summary(m02)
+
+m03 <- aov(ratio ~ Stratified+Seedmix+Application+SoilHealth+NutrientRunoff+Seedmix:Application+Seedmix:SoilHealth+SoilHealth:NutrientRunoff+Stratified:Application:SoilHealth+Stratified:Application:NutrientRunoff+Seedmix:Application:NutrientRunoff, data = DATA_TOTAL)
+summary(m03)
+
+###After variable selection, we decide to choose the following variables:Stratified,Seedmix,Application,SoilHealth,NutrientRunoff£¬
+###the following interactions: Seedmix:Application,Seedmix:SoilHealth,SoilHealth:NutrientRunoff,Stratified:Application:SoilHealth,Stratified:Application:NutrientRunoff,Seedmix:Application:NutrientRunoff
+
+# Comparison between nested models
+anova(m01, m03)
+```
