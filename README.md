@@ -20,8 +20,8 @@ Statistical Consulting Project
 	3) Timing: "How will plants respond to pre-emergent application of imazapic vs. post-emergent application?"
 
 * Hypothesis:
-  1)"An establishment strategy that combines cold stratification with post-emergent imazapic application will encourage the strongest community assembly of desired species while minimizing weed pressure.
-  2)Control sites which receive no imazapic will have high thresholds of weeds.
+  1) "An establishment strategy that combines cold stratification with post-emergent imazapic application will encourage the strongest community assembly of desired species while minimizing weed pressure.
+  2) Control sites which receive no imazapic will have high thresholds of weeds.
 * Want to show:
 	1) species assembly and population strength of target plants in relation to different seed mixes, cold stratification treatment, and timing of application.
 	2) Bar graphs displaying target species vs. common exotic weeds?
