@@ -1,4 +1,4 @@
-# SAS-Project-Pollinator-Habitat-Restoration-Tools
+# R-Project-Pollinator-Habitat-Restoration-Tools
 Statistical Consulting Project
 ## Introduction
 ### Project Objective:
