@@ -1,6 +1,6 @@
 # R-Project-Pollinator-Habitat-Restoration-Tools
 Statistical Consulting Project
-## Introduction
+## 1.Introduction
 ### Project Objective:
 * Examine imazapic ("Plateau") as part of a strategy for successful development of pollinator habitat.
 * Variables:
@@ -26,7 +26,14 @@ Statistical Consulting Project
 	1) species assembly and population strength of target plants in relation to different seed mixes, cold stratification treatment, and timing of application.
 	2) Bar graphs displaying target species vs. common exotic weeds?
 
-## Data Preprocessing 
+## 2.Data Preprocessing 
+### 2.1 Data Cleaning
+All the missing values in the dataset are replaced by 0 on the purpose of further analysis.
+### 2.2 Data Integration
+In this section, all the variables are created as follows:
+The target variable is ratio, which calculated through the formula: Ratio = ( Grass + Forbs ) / ( Grass + Forbs + Weeds)
+The predictors are created based on different treatment. All the predictor variables are categorical variable.
+
 ## Visualization
 ## ANOVA Analysis 
 ## Conclusion
